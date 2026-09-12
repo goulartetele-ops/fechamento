@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -96,6 +97,7 @@
     .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
     .card-pad { padding: 22px; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .reports-grid { align-items: start; }
     .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
     .stack { display: grid; gap: 14px; }
     .section-title { font-size: 17px; font-weight: 900; margin-bottom: 12px; }
@@ -114,15 +116,17 @@
     .money-input input { padding-left: 39px; }
 
     .dropzone {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      width: 100%; min-height: 190px;
       border: 2px dashed #b8c2d1; border-radius: 16px; padding: 30px 18px; text-align: center;
-      background: #fafbfc; transition: .15s ease;
+      background: #fafbfc; transition: .15s ease; cursor: pointer; overflow: hidden;
     }
     .dropzone.drag { border-color: var(--primary); background: var(--blue-bg); }
     .dropzone input { display: none; }
     .dropzone .icon { font-size: 34px; }
     .dropzone strong { display: block; margin-top: 8px; }
     .dropzone small { display: block; margin-top: 4px; color: var(--muted); }
-    .file-chip { display: none; margin-top: 13px; padding: 10px 12px; border-radius: 10px; background: var(--green-bg); color: var(--green); font-weight: 800; font-size: 13px; }
+    .file-chip { display: none; width: 100%; max-width: 100%; margin-top: 16px; padding: 10px 12px; border-radius: 10px; background: var(--green-bg); color: var(--green); font-weight: 800; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .file-chip.show { display: block; }
 
     .btn {
@@ -301,7 +305,7 @@
       <div class="page-head">
         <div><div class="eyebrow">Etapa 1 de 6</div><h2>Anexe os relatórios</h2><p>Envie o relatório Excel de vendas e cole a lista do Acompanhamento de Pedidos do KP.</p></div>
       </div>
-      <div class="grid-2">
+      <div class="grid-2 reports-grid">
         <div class="card card-pad">
           <div class="section-title">Relatório Excel</div>
           <label id="dropzone" class="dropzone" for="excel-file">
@@ -694,7 +698,7 @@
     const addText=form==='cartao'
       ? 'Selecione, entre os pedidos lançados em outras formas de pagamento, o pedido correspondente ao canhoto.'
       : 'Se um PIX recebido estiver lançado como dinheiro, cartão ou outra forma, selecione o lançamento correspondente para trazê-lo para esta conferência.';
-    const addOptions=candidates.map(({order:o,payment:p})=>`<option value="${p.id}">Pedido #${o.codigo} — ${esc(o.cliente||'Sem cliente')} — ${FORM_LABELS[p.formaAtual]||p.formaAtual} — ${money(p.valor)}${o.endereco?' — '+esc(o.endereco):''}</option>`).join('');
+    const addOptions=candidates.map(({order:o,payment:p})=>`<option value="${p.id}">Pedido #${o.codigo} — ${esc(o.cliente||'Sem cliente')} — Entrega: ${o.horarioEntrega||'sem horário'} — ${FORM_LABELS[p.formaAtual]||p.formaAtual} — ${money(p.valor)}${o.endereco?' — '+esc(o.endereco):''}</option>`).join('');
     el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa ${step} de 6</div><h2>Conferência de ${form==='pix'?'PIX':'cartão'}</h2><p>${form==='cartao'?'Confira cada lançamento usando também o horário de entrega.':'Confira todos os pedidos atualmente classificados como PIX.'}</p></div>
       <div><div class="muted small">Valor atual</div><div class="summary-value">${money(totalCurrent)}</div></div></div>
       <div class="add-payment-card">
