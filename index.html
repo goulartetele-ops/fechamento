@@ -1,4 +1,6 @@
 
+
+
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -57,8 +59,19 @@
     .home-link { background: none; border: 0; color: var(--muted); font-weight: 700; padding: 8px 10px; border-radius: 9px; }
     .home-link:hover { background: #f2f4f7; color: var(--ink); }
 
+    .closing-context-wrap {
+      max-width: 1180px; margin: 0 auto; padding: 0 22px 10px;
+    }
+    .closing-context {
+      display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+      padding: 10px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid var(--line);
+      color: #344054; font-size: 13px; font-weight: 800;
+    }
+    .closing-context strong { color: var(--ink); }
+    .closing-context .dot { color: #98a2b3; }
+
     .progress-wrap { max-width: 1180px; margin: 0 auto; padding: 10px 22px 13px; }
-    .progress { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+    .progress { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
     .progress-item {
       min-width: 0; padding: 10px 9px; border-radius: 12px; background: #f2f4f7;
       color: #667085; font-size: 12px; font-weight: 800; text-align: center; border: 1px solid transparent;
@@ -235,6 +248,21 @@
     .notes-box li + li { margin-top: 7px; }
     .empty-notes { color: var(--green); font-weight: 800; }
 
+    .order-tools { margin-top: 16px; }
+    .order-tools-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .order-tools-list { display:grid; gap:8px; max-height:340px; overflow:auto; }
+    .order-tool-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:12px; align-items:center; padding:11px 12px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+    .order-tool-row strong { display:block; }
+    .order-tool-row small { color:var(--muted); }
+    .modal-backdrop { position:fixed; inset:0; z-index:200; background:rgba(16,24,40,.55); display:grid; place-items:center; padding:18px; }
+    .modal-card { width:min(880px,100%); max-height:92vh; overflow:auto; background:white; border-radius:18px; box-shadow:0 24px 70px rgba(16,24,40,.28); border:1px solid var(--line); }
+    .modal-head { position:sticky; top:0; z-index:2; background:white; padding:18px 20px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .modal-body { padding:20px; display:grid; gap:18px; }
+    .editor-list { display:grid; gap:9px; }
+    .editor-row { display:grid; grid-template-columns:minmax(150px,1fr) minmax(105px,.45fr) minmax(105px,.45fr) minmax(105px,.45fr) auto; gap:8px; align-items:end; padding:10px; border:1px solid var(--line); border-radius:12px; }
+    .editor-payment-row { grid-template-columns:minmax(150px,1fr) minmax(120px,.55fr) auto; }
+    @media (max-width:700px) { .editor-row,.editor-payment-row { grid-template-columns:1fr; } }
+
     .toast {
       position: fixed; right: 20px; bottom: 20px; z-index: 99; max-width: 420px;
       background: #101828; color: white; padding: 13px 15px; border-radius: 12px; box-shadow: var(--shadow);
@@ -255,7 +283,7 @@
     }
     @media (max-width: 560px) {
       main { padding: 22px 14px 70px; }
-      .topbar-inner, .progress-wrap { padding-left: 14px; padding-right: 14px; }
+      .topbar-inner, .progress-wrap, .closing-context-wrap { padding-left: 14px; padding-right: 14px; }
       .card-pad { padding: 16px; }
       .grid-3, .stats, .summary-kpis { grid-template-columns: 1fr; }
       .dynamic-row.expense, .truck-row { grid-template-columns: 1fr; }
@@ -267,9 +295,9 @@
 
     @media print {
       body { background: white; }
-      .topbar, .progress-wrap, .no-print, #home-screen, #step-1, #step-2, #step-3, #step-4, #step-5 { display: none !important; }
+      .topbar, .progress-wrap, .no-print, #home-screen, #step-1, #step-2, #step-3, #step-4, #step-5, #step-6 { display: none !important; }
       main { max-width: none; padding: 0; }
-      #step-6 { display: block !important; }
+      #step-7 { display: block !important; }
       .card { box-shadow: none; break-inside: avoid; }
       .review-grid { grid-template-columns: 1fr 1fr; }
     }
@@ -281,9 +309,12 @@
     <div class="topbar-inner">
       <div class="brand">
         <div class="brand-mark">✓</div>
-        <div>Conferência de Caixa<small>Fechamento guiado em 6 etapas</small></div>
+        <div>Conferência de Caixa<small>Fechamento guiado em 7 etapas</small></div>
       </div>
       <button class="home-link no-print" onclick="goHome()">Início</button>
+    </div>
+    <div id="closing-context-wrap" class="closing-context-wrap hidden">
+      <div id="closing-context" class="closing-context"></div>
     </div>
     <div id="progress-wrap" class="progress-wrap hidden">
       <div class="progress" id="progress"></div>
@@ -303,7 +334,7 @@
 
     <section id="step-1" class="screen">
       <div class="page-head">
-        <div><div class="eyebrow">Etapa 1 de 6</div><h2>Anexe os relatórios</h2><p>Envie o relatório Excel de vendas e cole a lista do Acompanhamento de Pedidos do KP.</p></div>
+        <div><div class="eyebrow">Etapa 1 de 7</div><h2>Anexe os relatórios</h2><p>Envie o relatório Excel de vendas e cole a lista do Acompanhamento de Pedidos do KP.</p></div>
       </div>
       <div class="grid-2 reports-grid">
         <div class="card card-pad">
@@ -335,16 +366,18 @@
     <section id="step-4" class="screen"></section>
     <section id="step-5" class="screen"></section>
     <section id="step-6" class="screen"></section>
+    <section id="step-7" class="screen"></section>
   </main>
 </div>
 <div id="toast" class="toast"></div>
+<div id="order-modal-root"></div>
 
 <script>
 (() => {
   'use strict';
 
   const STORAGE_KEY = 'fechamento_caixa_v1';
-  const STEP_NAMES = ['Relatórios','PIX','Cartão','Caixa','Carga','Resumo'];
+  const STEP_NAMES = ['Relatórios','Ajustes','PIX','Cartão','Caixa','Carga','Resumo'];
   const FORM_LABELS = {
     dinheiro: 'Dinheiro', pix: 'PIX', cartao: 'Cartão', gas_povo: 'Gás do Povo',
     permuta: 'Permuta', cupom_brunetto: 'Cupom Brunetto', nao_pago: 'Não pago', outro: 'Outro'
@@ -361,6 +394,7 @@
       ui: { lastStep: 1, returnTo: null },
       meta: { data: '', excelFileName: '', importedAt: '', kpText: '' },
       orders: [],
+      manualChanges: [],
       importInfo: { kpCount: 0, matchedCount: 0, missingTimeCodes: [], kpOnlyCodes: [] },
       steps: { pixDone: false, cardDone: false, caixaDone: false, cargaDone: false },
       caixa: { trocoInicial: '', dinheiro: '', abastecimentos: [], deposito: '', gastos: [], cuponsOutras: [], trocoFinal: '' },
@@ -421,6 +455,26 @@
     clearTimeout(showToast._t); showToast._t = setTimeout(() => el.classList.remove('show'), 2600);
   }
 
+  function closingContextData() {
+    const entregadores=[...new Set((app.orders||[]).map(o=>String(o.entregador||'').trim()).filter(Boolean))];
+    const data=app.meta?.data||'';
+    let entregadorLabel='Entregador não informado';
+    if (entregadores.length===1) entregadorLabel=entregadores[0];
+    else if (entregadores.length>1) entregadorLabel=entregadores.join(', ');
+    return {data, entregadores, entregadorLabel};
+  }
+
+  function renderClosingContext(step) {
+    const wrap=document.getElementById('closing-context-wrap');
+    const el=document.getElementById('closing-context');
+    if (!wrap || !el) return;
+    if (!step) { wrap.classList.add('hidden'); el.innerHTML=''; return; }
+    const ctx=closingContextData();
+    const entregadorTitulo=ctx.entregadores.length>1?'Entregadores':'Entregador';
+    el.innerHTML=`<span>📅 Caixa de <strong>${esc(ctx.data||'data não informada')}</strong></span><span class="dot">•</span><span>🚚 ${entregadorTitulo}: <strong>${esc(ctx.entregadorLabel)}</strong></span>`;
+    wrap.classList.remove('hidden');
+  }
+
   function renderProgress(step) {
     const wrap = document.getElementById('progress-wrap');
     if (!step) { wrap.classList.add('hidden'); return; }
@@ -441,6 +495,7 @@
     const target = document.getElementById(id);
     target.classList.add('active');
     renderProgress(step);
+    renderClosingContext(step);
     if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
     requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -460,7 +515,7 @@
     if (app.inProgress && app.orders.length && !confirm('Já existe um fechamento salvo neste navegador. Deseja iniciar um novo e apagar o rascunho atual?')) return;
     app = freshState(); app.inProgress = true; saveState(); selectedExcelFile = null; renderStep1(); setScreen('step-1',1);
   };
-  window.continueClosing = function() { const step = app.finalized ? 6 : Math.max(1, Math.min(6, app.ui.lastStep||1)); navigate(step); };
+  window.continueClosing = function() { const step = app.finalized ? 7 : Math.max(1, Math.min(7, app.ui.lastStep||1)); navigate(step); };
   window.discardClosing = function() {
     if (!confirm('Descartar o fechamento salvo neste navegador?')) return;
     app=freshState(); selectedExcelFile=null; localStorage.removeItem(STORAGE_KEY); renderHome();
@@ -470,14 +525,15 @@
     if (returnTo) app.ui.returnTo = returnTo;
     app.ui.lastStep = step; saveState();
     if (step===1) renderStep1();
-    if (step===2) renderPaymentStep('pix');
-    if (step===3) renderPaymentStep('cartao');
-    if (step===4) renderCashStep();
-    if (step===5) renderLoadStep();
-    if (step===6) renderReviewStep();
+    if (step===2) renderAdjustmentsStep();
+    if (step===3) renderPaymentStep('pix');
+    if (step===4) renderPaymentStep('cartao');
+    if (step===5) renderCashStep();
+    if (step===6) renderLoadStep();
+    if (step===7) renderReviewStep();
     setScreen('step-'+step, step);
   }
-  window.editStep = function(step, returnTo=6) { navigate(step, returnTo); };
+  window.editStep = function(step, returnTo=7) { navigate(step, returnTo); };
 
   // -------- ETAPA 1 --------
   function renderStep1() {
@@ -639,6 +695,20 @@
     }
   };
 
+  // -------- ETAPA 2: AJUSTES MANUAIS --------
+  function renderAdjustmentsStep() {
+    const el=document.getElementById('step-2');
+    el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa 2 de 7</div><h2>Revisar e ajustar pedidos</h2><p>Antes das conferências, confira se os pedidos importados estão corretos. Inclua pedidos ausentes ou ajuste valores, produtos e formas de pagamento quando necessário.</p></div></div>
+      <div class="alert alert-info" style="margin-bottom:16px"><b>Por que esta etapa vem antes?</b> PIX, cartão, caixa e carga serão conferidos com base nos pedidos que ficarem salvos aqui.</div>
+      ${renderOrderToolsHTML()}
+      <div class="actions"><button class="btn btn-secondary" onclick="navigatePublic(1)">← Voltar aos relatórios</button><div class="actions-right"><button class="btn btn-primary" onclick="finishAdjustmentsStep()">Pedidos revisados → iniciar conferências</button></div></div>`;
+  }
+  window.finishAdjustmentsStep=function(){
+    saveState();
+    showToast('Pedidos revisados. Iniciando conferências.');
+    navigate(3);
+  };
+
   // -------- PAGAMENTOS --------
   function allPayments() { return app.orders.flatMap(o=>o.pagamentos.map(p=>({order:o,payment:p}))); }
   function paymentsForStage(form) {
@@ -691,7 +761,7 @@
   }
 
   function renderPaymentStep(form) {
-    const step=form==='pix'?2:3, el=document.getElementById('step-'+step), items=paymentsForStage(form);
+    const step=form==='pix'?3:4, el=document.getElementById('step-'+step), items=paymentsForStage(form);
     const candidates=candidatePaymentsForStage(form);
     const totalCurrent=paymentTotals()[form]||0;
     const addTitle=form==='cartao'?'Está sobrando algum canhoto?':'Adicionar pedido lançado em outra forma de pagamento';
@@ -699,7 +769,7 @@
       ? 'Selecione, entre os pedidos lançados em outras formas de pagamento, o pedido correspondente ao canhoto.'
       : 'Se um PIX recebido estiver lançado como dinheiro, cartão ou outra forma, selecione o lançamento correspondente para trazê-lo para esta conferência.';
     const addOptions=candidates.map(({order:o,payment:p})=>`<option value="${p.id}">Pedido #${o.codigo} — ${esc(o.cliente||'Sem cliente')} — Entrega: ${o.horarioEntrega||'sem horário'} — ${FORM_LABELS[p.formaAtual]||p.formaAtual} — ${money(p.valor)}${o.endereco?' — '+esc(o.endereco):''}</option>`).join('');
-    el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa ${step} de 6</div><h2>Conferência de ${form==='pix'?'PIX':'cartão'}</h2><p>${form==='cartao'?'Confira cada lançamento usando também o horário de entrega.':'Confira todos os pedidos atualmente classificados como PIX.'}</p></div>
+    el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa ${step} de 7</div><h2>Conferência de ${form==='pix'?'PIX':'cartão'}</h2><p>${form==='cartao'?'Confira cada lançamento usando também o horário de entrega.':'Confira todos os pedidos atualmente classificados como PIX.'}</p></div>
       <div><div class="muted small">Valor atual</div><div class="summary-value">${money(totalCurrent)}</div></div></div>
       <div class="add-payment-card">
         <h3>${addTitle}</h3><p>${addText}</p>
@@ -773,7 +843,7 @@
     }
     if(form==='pix')app.steps.pixDone=true; else app.steps.cardDone=true;
     saveState(); showToast(`Conferência de ${form==='pix'?'PIX':'cartão'} salva.`);
-    const ret=app.ui.returnTo; if(ret){app.ui.returnTo=null;navigate(ret);} else navigate(form==='pix'?3:4);
+    const ret=app.ui.returnTo; if(ret){app.ui.returnTo=null;navigate(ret);} else navigate(form==='pix'?4:5);
   };
   window.navigatePublic = function(step){ navigate(step); };
 
@@ -784,13 +854,19 @@
   }
 
   // -------- ETAPA 4 --------
+  function isP13Product(name) {
+    const n = normalizeText(name);
+    if (!n || n.includes('casco')) return false;
+    return /(^|\s|-)p13($|\s|-)/.test(n);
+  }
   function getP13Sold(orders=app.orders) {
-    return orders.reduce((sum,o)=>sum+o.produtos.filter(p=>normalizeText(p.nome).includes('p13')).reduce((s,p)=>s+num(p.quantidade),0),0);
+    return orders.reduce((sum,o)=>sum+(o.produtos||[]).filter(p=>isP13Product(p.nome)).reduce((s,p)=>s+num(p.quantidade),0),0);
   }
   function cashSales() { return paymentTotals().dinheiro||0; }
   function autoNotes() {
     const notes=[];
     for (const {order:o,payment:p} of allPayments()) if (p.unpaid || p.formaAtual==='nao_pago') notes.push(`Pedido #${o.codigo} — ${o.cliente||'Cliente'} — ${money(p.valor)} — não foi pago.`);
+    for (const change of (app.manualChanges||[])) notes.push(`ALTERAÇÃO MANUAL — ${change.texto}`);
     return notes;
   }
   function sumItems(arr){return (arr||[]).reduce((s,x)=>s+num(x.valor),0);}
@@ -849,9 +925,9 @@
   function renderCashStep() {
     const t=paymentTotals(), totalOrders=app.orders.reduce((s,o)=>s+num(o.totalPedido),0);
     const pixPending=pendingFor('pix'), cardPending=pendingFor('cartao');
-    const el=document.getElementById('step-4');
-    el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa 4 de 6</div><h2>Cálculo do caixa</h2><p>Preencha os valores do fechamento. <b>Os centavos são desconsiderados nesta etapa.</b> O cálculo usa: troco inicial + total dos pedidos − demais valores.</p></div></div>
-      ${(pixPending||cardPending)?`<div class="alert alert-warning" style="margin-bottom:16px"><b>Atenção:</b> há pagamentos pendentes de conferência. ${pixPending?`<button class="btn btn-ghost btn-small" onclick="editStep(2,4)">Revisar PIX</button>`:''} ${cardPending?`<button class="btn btn-ghost btn-small" onclick="editStep(3,4)">Revisar cartão</button>`:''}</div>`:''}
+    const el=document.getElementById('step-5');
+    el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa 5 de 7</div><h2>Cálculo do caixa</h2><p>Preencha os valores do fechamento. <b>Os centavos são desconsiderados nesta etapa.</b> O cálculo usa: troco inicial + total dos pedidos − demais valores.</p></div></div>
+      ${(pixPending||cardPending)?`<div class="alert alert-warning" style="margin-bottom:16px"><b>Atenção:</b> há pagamentos pendentes de conferência. ${pixPending?`<button class="btn btn-ghost btn-small" onclick="editStep(3,5)">Revisar PIX</button>`:''} ${cardPending?`<button class="btn btn-ghost btn-small" onclick="editStep(4,5)">Revisar cartão</button>`:''}</div>`:''}
       <div class="calc-layout">
         <div class="card card-pad stack">
           <div class="section-title">Valores do caixa</div>
@@ -868,8 +944,8 @@
           <div class="card card-pad">
             <div class="section-title">Pagamentos após conferência</div>
             <div class="stack">
-              <div class="form-total-card"><div><span>PIX final</span><strong>${moneyWhole(paymentTotalWhole('pix'))}</strong></div><button class="btn btn-ghost btn-small" onclick="editStep(2,4)">Editar</button></div>
-              <div class="form-total-card"><div><span>Cartão final</span><strong>${moneyWhole(paymentTotalWhole('cartao'))}</strong></div><button class="btn btn-ghost btn-small" onclick="editStep(3,4)">Editar</button></div>
+              <div class="form-total-card"><div><span>PIX final</span><strong>${moneyWhole(paymentTotalWhole('pix'))}</strong></div><button class="btn btn-ghost btn-small" onclick="editStep(3,5)">Editar</button></div>
+              <div class="form-total-card"><div><span>Cartão final</span><strong>${moneyWhole(paymentTotalWhole('cartao'))}</strong></div><button class="btn btn-ghost btn-small" onclick="editStep(4,5)">Editar</button></div>
             </div>
             <div class="calc-breakdown" style="margin-top:18px">
               <div class="calc-line"><span>Total geral dos pedidos</span><strong>${moneyWhole(totalOrdersWhole())}</strong></div>
@@ -882,7 +958,7 @@
           <div class="card card-pad"><div class="section-title">Conferência</div><div id="cash-breakdown" class="calc-breakdown"></div><div id="cash-result"></div></div>
         </div>
       </div>
-      <div class="actions"><button class="btn btn-secondary" onclick="navigatePublic(3)">← Voltar</button><div class="actions-right"><button class="btn btn-primary" onclick="finishCashStep()">Salvar e continuar →</button></div></div>`;
+      <div class="actions"><button class="btn btn-secondary" onclick="navigatePublic(4)">← Voltar</button><div class="actions-right"><button class="btn btn-primary" onclick="finishCashStep()">Salvar e continuar →</button></div></div>`;
     renderDynamicCashLists(); renderCashResultOnly();
   }
 
@@ -891,7 +967,7 @@
   window.addListItem=function(list){app.caixa[list]=app.caixa[list]||[];app.caixa[list].push((list==='gastos'||list==='cuponsOutras')?{id:uid(),descricao:'',valor:''}:{id:uid(),valor:''});app.steps.caixaDone=false;saveState();renderDynamicCashLists();renderCashResultOnly();};
   window.removeListItem=function(list,id){app.caixa[list]=(app.caixa[list]||[]).filter(x=>x.id!==id);app.steps.caixaDone=false;saveState();renderDynamicCashLists();renderCashResultOnly();};
   window.updateListValue=function(list,id,key,val){const x=(app.caixa[list]||[]).find(x=>x.id===id);if(x)x[key]=val;app.steps.caixaDone=false;saveState();renderCashResultOnly();};
-  window.finishCashStep=function(){if(pendingFor('pix')||pendingFor('cartao')){showToast('Finalize as conferências de PIX e cartão antes de continuar.');return;}app.steps.caixaDone=true;saveState();showToast('Cálculo do caixa salvo.');const r=app.ui.returnTo;if(r){app.ui.returnTo=null;navigate(r)}else navigate(5);};
+  window.finishCashStep=function(){if(pendingFor('pix')||pendingFor('cartao')){showToast('Finalize as conferências de PIX e cartão antes de continuar.');return;}app.steps.caixaDone=true;saveState();showToast('Cálculo do caixa salvo.');const r=app.ui.returnTo;if(r){app.ui.returnTo=null;navigate(r)}else navigate(6);};
 
   // -------- ETAPA 5 --------
   function loadCalc(){
@@ -906,12 +982,66 @@
   function renderLoadResult(){const r=loadCalc(),el=document.getElementById('load-result');if(!el)return;el.innerHTML=`${resultHTML(r.diff,'carga')}<div style="overflow:auto"><table class="load-table"><thead><tr><th>Caminhonetes</th><th>P13 vendidos</th><th>P13 carregados</th><th>Cargas iniciais</th><th>Finais exceto última</th><th>Final informado</th><th>Final esperado</th></tr></thead><tbody><tr><td>${app.carga.caminhonetes.length}</td><td>${formatQty(r.sold)}</td><td>${formatQty(r.loaded)}</td><td>${formatQty(r.initials)}</td><td>${formatQty(r.finalsExcept)}</td><td>${formatQty(r.finalLast)}</td><td>${formatQty(r.expected)}</td></tr></tbody></table></div>`;
     const auto=getP13Sold(); const warn=document.getElementById('sold-check'); if(warn)warn.innerHTML=Math.abs(r.sold-auto)<.02?`<div class="alert alert-ok">P13 vendidos conferem com o resumo do Excel: <b>${formatQty(auto)}</b>.</div>`:`<div class="alert alert-warning">P13 vendidos no Excel: <b>${formatQty(auto)}</b>. Informados: <b>${formatQty(r.sold)}</b>. Diferença: <b>${formatQty(r.sold-auto)}</b>.</div>`;
   }
-  function renderLoadStep(){const el=document.getElementById('step-5');if(!app.carga.caminhonetes?.length)app.carga.caminhonetes=[{id:uid(),inicial:'',final:''}];if(app.carga.vendidosInformados==='')app.carga.vendidosInformados=String(getP13Sold());el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa 5 de 6</div><h2>Conferência de carga</h2><p>Confira os P13 vendidos, carregados e a movimentação de cada caminhonete.</p></div></div><div class="card card-pad stack"><div class="grid-2"><label class="field">P13 vendidos<input type="text" inputmode="decimal" value="${esc(app.carga.vendidosInformados)}" oninput="updateLoadBase('vendidosInformados',this.value)"></label><label class="field">P13 carregados<input type="text" inputmode="decimal" value="${esc(app.carga.carregados)}" oninput="updateLoadBase('carregados',this.value)"></label></div><div id="sold-check"></div><div class="section-title" style="margin-top:6px">Caminhonetes</div><div id="trucks-list" class="stack"></div><button class="btn btn-secondary btn-small" style="justify-self:start" onclick="addTruck()">+ Adicionar caminhonete</button><div id="load-result"></div></div><div class="actions"><button class="btn btn-secondary" onclick="navigatePublic(4)">← Voltar</button><div class="actions-right"><button class="btn btn-primary" onclick="finishLoadStep()">Finalizar conferência →</button></div></div>`;renderTrucks();renderLoadResult();}
+  function renderLoadStep(){const el=document.getElementById('step-6');if(!app.carga.caminhonetes?.length)app.carga.caminhonetes=[{id:uid(),inicial:'',final:''}];if(app.carga.vendidosInformados==='')app.carga.vendidosInformados=String(getP13Sold());el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa 6 de 7</div><h2>Conferência de carga</h2><p>Confira os P13 vendidos, carregados e a movimentação de cada caminhonete.</p></div></div><div class="card card-pad stack"><div class="grid-2"><label class="field">P13 vendidos<input type="text" inputmode="decimal" value="${esc(app.carga.vendidosInformados)}" oninput="updateLoadBase('vendidosInformados',this.value)"></label><label class="field">P13 carregados<input type="text" inputmode="decimal" value="${esc(app.carga.carregados)}" oninput="updateLoadBase('carregados',this.value)"></label></div><div id="sold-check"></div><div class="section-title" style="margin-top:6px">Caminhonetes</div><div id="trucks-list" class="stack"></div><button class="btn btn-secondary btn-small" style="justify-self:start" onclick="addTruck()">+ Adicionar caminhonete</button><div id="load-result"></div></div><div class="actions"><button class="btn btn-secondary" onclick="navigatePublic(5)">← Voltar</button><div class="actions-right"><button class="btn btn-primary" onclick="finishLoadStep()">Finalizar conferência →</button></div></div>`;renderTrucks();renderLoadResult();}
   window.updateLoadBase=function(k,v){app.carga[k]=v;app.steps.cargaDone=false;saveState();renderLoadResult();};
   window.addTruck=function(){app.carga.caminhonetes.push({id:uid(),inicial:'',final:''});app.steps.cargaDone=false;saveState();renderTrucks();renderLoadResult();};
   window.removeTruck=function(id){if(app.carga.caminhonetes.length<=1){showToast('Mantenha pelo menos uma caminhonete.');return;}app.carga.caminhonetes=app.carga.caminhonetes.filter(x=>x.id!==id);app.steps.cargaDone=false;saveState();renderTrucks();renderLoadResult();};
   window.updateTruck=function(id,k,v){const t=app.carga.caminhonetes.find(x=>x.id===id);if(t)t[k]=v;app.steps.cargaDone=false;saveState();renderLoadResult();};
-  window.finishLoadStep=function(){app.steps.cargaDone=true;saveState();showToast('Conferência de carga salva.');const r=app.ui.returnTo;if(r){app.ui.returnTo=null;navigate(r)}else navigate(6);};
+  window.finishLoadStep=function(){app.steps.cargaDone=true;saveState();showToast('Conferência de carga salva.');const r=app.ui.returnTo;if(r){app.ui.returnTo=null;navigate(r)}else navigate(7);};
+
+  // -------- AJUSTES MANUAIS DE PEDIDOS --------
+  function paymentFormOptions(selected='') {
+    return Object.entries(FORM_LABELS).filter(([k])=>k!=='nao_pago').map(([k,v])=>`<option value="${k}" ${selected===k?'selected':''}>${v}</option>`).join('');
+  }
+  function recordManualChange(texto) {
+    app.manualChanges=app.manualChanges||[];
+    app.manualChanges.push({id:uid(),quando:new Date().toISOString(),texto});
+  }
+  function orderSnapshot(o) {
+    return JSON.stringify({codigo:o.codigo,cliente:o.cliente,endereco:o.endereco,horarioEntrega:o.horarioEntrega,totalPedido:num(o.totalPedido),produtos:(o.produtos||[]).map(p=>({nome:p.nome,quantidade:num(p.quantidade),unitario:num(p.unitario),total:num(p.total)})),pagamentos:(o.pagamentos||[]).map(p=>({formaAtual:p.formaAtual,valor:num(p.valor),unpaid:!!p.unpaid}))});
+  }
+  function describeOrderChanges(before, after) {
+    const changes=[];
+    if (!before) return `Pedido #${after.codigo} adicionado manualmente ao fechamento.`;
+    const afterSnap=JSON.parse(orderSnapshot(after));
+    if (Number(before.codigo)!==Number(afterSnap.codigo)) changes.push(`código ${before.codigo} → ${afterSnap.codigo}`);
+    if (String(before.cliente||'')!==String(afterSnap.cliente||'')) changes.push(`cliente alterado`);
+    if (String(before.endereco||'')!==String(afterSnap.endereco||'')) changes.push(`endereço alterado`);
+    if (String(before.horarioEntrega||'')!==String(afterSnap.horarioEntrega||'')) changes.push(`horário de entrega alterado`);
+    if (Math.abs(num(before.totalPedido)-num(afterSnap.totalPedido))>.009) changes.push(`valor total ${money(before.totalPedido)} → ${money(afterSnap.totalPedido)}`);
+    if (JSON.stringify(before.pagamentos)!==JSON.stringify(afterSnap.pagamentos)) changes.push(`formas/valores de pagamento alterados`);
+    if (JSON.stringify(before.produtos)!==JSON.stringify(afterSnap.produtos)) changes.push(`produtos/quantidades alterados`);
+    return `Pedido #${afterSnap.codigo} — ${changes.length?changes.join('; '):'dados salvos novamente'}.`;
+  }
+  function resetAfterOrderChange() {
+    app.steps.pixDone=false; app.steps.cardDone=false; app.steps.caixaDone=false; app.steps.cargaDone=false;
+    app.finalized=false;
+    app.carga.vendidosInformados=String(getP13Sold());
+  }
+  function renderOrderToolsHTML() {
+    const rows=[...app.orders].sort((a,b)=>a.codigo-b.codigo).map(o=>`<div class="order-tool-row"><div><strong>Pedido #${o.codigo} — ${esc(o.cliente||'Sem cliente')}</strong><small>${money(o.totalPedido)} · ${(o.pagamentos||[]).map(p=>`${FORM_LABELS[p.formaAtual]||p.formaAtual}: ${money(p.valor)}`).join(' + ')||'sem pagamento'}</small></div><button class="btn btn-ghost btn-small no-print" onclick="openOrderEditor('${o.id}')">Editar</button></div>`).join('');
+    return `<div class="card card-pad order-tools no-print"><div class="order-tools-head"><div><div class="section-title" style="margin:0">Ajustes manuais de pedidos</div><div class="muted small">Inclua pedidos que não vieram do relatório ou corrija valor, produtos e formas de pagamento.</div></div><button class="btn btn-primary btn-small" onclick="openOrderEditor()">+ Novo pedido</button></div><div class="alert alert-warning" style="margin-bottom:12px"><b>Atenção:</b> qualquer inclusão ou alteração feita aqui será registrada automaticamente nas anotações da folha final do fechamento e deve ser comunicada.</div><div class="order-tools-list">${rows||'<div class="muted">Nenhum pedido disponível.</div>'}</div></div>`;
+  }
+  window.openOrderEditor=function(orderId='') {
+    const existing=orderId?app.orders.find(o=>o.id===orderId):null;
+    const maxCode=app.orders.reduce((m,o)=>Math.max(m,Number(o.codigo)||0),0);
+    const o=existing?JSON.parse(JSON.stringify(existing)):{id:'manual_'+uid(),codigo:maxCode+1,cliente:'',endereco:'',entregador:'',totalPedido:0,produtos:[],pagamentos:[],dataLancamento:app.meta.data||'',horarioLancamento:'',tempoEntrega:'',horarioEntrega:'',manual:true};
+    window.__editingOrder={isNew:!existing, original:existing?JSON.parse(orderSnapshot(existing)):null, draft:o};
+    const root=document.getElementById('order-modal-root');
+    root.innerHTML=`<div class="modal-backdrop" onclick="if(event.target===this)closeOrderEditor()"><div class="modal-card"><div class="modal-head"><div><strong>${existing?'Editar pedido #'+o.codigo:'Adicionar novo pedido'}</strong><div class="muted small">Alterações serão registradas na folha final.</div></div><button class="btn btn-secondary btn-small" onclick="closeOrderEditor()">Fechar</button></div><div class="modal-body"><div class="alert alert-warning"><b>Importante:</b> qualquer dado diferente do sistema será incluído automaticamente nas anotações do fechamento.</div><div class="grid-2"><label class="field">Código do pedido<input id="oe-code" type="number" value="${esc(o.codigo)}"></label><label class="field">Valor total do pedido<div class="money-input"><span>R$</span><input id="oe-total" type="text" inputmode="decimal" value="${esc(o.totalPedido)}"></div></label><label class="field">Cliente<input id="oe-client" type="text" value="${esc(o.cliente||'')}"></label><label class="field">Horário de entrega<input id="oe-time" type="text" placeholder="HH:MM:SS" value="${esc(o.horarioEntrega||'')}"></label></div><label class="field">Endereço<input id="oe-address" type="text" value="${esc(o.endereco||'')}"></label><div><div class="section-title" style="font-size:15px">Produtos</div><div id="oe-products" class="editor-list"></div><button class="btn btn-secondary btn-small" onclick="addEditorProduct()">+ Adicionar produto</button></div><div><div class="section-title" style="font-size:15px">Formas de pagamento</div><div id="oe-payments" class="editor-list"></div><button class="btn btn-secondary btn-small" onclick="addEditorPayment()">+ Adicionar forma de pagamento</button></div><div class="actions"><button class="btn btn-danger" onclick="${existing?`deleteEditedOrder('${o.id}')`:'closeOrderEditor()'}">${existing?'Excluir pedido':'Cancelar'}</button><div class="actions-right"><button class="btn btn-primary" onclick="saveEditedOrder()">Salvar alterações</button></div></div></div></div></div>`;
+    renderEditorProducts(); renderEditorPayments();
+  };
+  window.closeOrderEditor=function(){document.getElementById('order-modal-root').innerHTML='';window.__editingOrder=null;};
+  function renderEditorProducts(){const d=window.__editingOrder?.draft;if(!d)return;const el=document.getElementById('oe-products');if(!el)return;el.innerHTML=(d.produtos||[]).map((p,i)=>`<div class="editor-row"><label class="field">Produto<input value="${esc(p.nome||'')}" oninput="editProduct(${i},'nome',this.value)"></label><label class="field">Qtd.<input type="text" inputmode="decimal" value="${esc(p.quantidade)}" oninput="editProduct(${i},'quantidade',this.value)"></label><label class="field">Unitário<input type="text" inputmode="decimal" value="${esc(p.unitario)}" oninput="editProduct(${i},'unitario',this.value)"></label><label class="field">Total<input type="text" inputmode="decimal" value="${esc(p.total)}" oninput="editProduct(${i},'total',this.value)"></label><button class="btn btn-danger btn-small" onclick="removeEditorProduct(${i})">Remover</button></div>`).join('')||'<div class="muted small">Nenhum produto informado.</div>';}
+  window.addEditorProduct=function(){const d=window.__editingOrder?.draft;if(!d)return;d.produtos=d.produtos||[];d.produtos.push({nome:'P13',quantidade:1,unitario:0,total:0});renderEditorProducts();};
+  window.editProduct=function(i,k,v){const p=window.__editingOrder?.draft?.produtos?.[i];if(!p)return;p[k]=k==='nome'?v:num(v);};
+  window.removeEditorProduct=function(i){const d=window.__editingOrder?.draft;if(!d)return;d.produtos.splice(i,1);renderEditorProducts();};
+  function renderEditorPayments(){const d=window.__editingOrder?.draft;if(!d)return;const el=document.getElementById('oe-payments');if(!el)return;el.innerHTML=(d.pagamentos||[]).map((p,i)=>`<div class="editor-row editor-payment-row"><label class="field">Forma<select onchange="editPayment(${i},'formaAtual',this.value)">${paymentFormOptions(p.formaAtual||'outro')}</select></label><label class="field">Valor<div class="money-input"><span>R$</span><input type="text" inputmode="decimal" value="${esc(p.valor)}" oninput="editPayment(${i},'valor',this.value)"></div></label><button class="btn btn-danger btn-small" onclick="removeEditorPayment(${i})">Remover</button></div>`).join('')||'<div class="muted small">Nenhuma forma de pagamento informada.</div>';}
+  window.addEditorPayment=function(){const d=window.__editingOrder?.draft;if(!d)return;d.pagamentos=d.pagamentos||[];d.pagamentos.push({id:'pay_manual_'+uid(),formaOriginal:'outro',formaAtual:'outro',rotuloOriginal:'Ajuste manual',valor:0,conferencias:{pix:null,cartao:null},realocadoPara:{pix:null,cartao:null},unpaid:false,manual:true});renderEditorPayments();};
+  window.editPayment=function(i,k,v){const p=window.__editingOrder?.draft?.pagamentos?.[i];if(!p)return;if(k==='valor')p.valor=num(v);else{p[k]=v;p.formaOriginal=p.formaOriginal||v;p.rotuloOriginal=FORM_LABELS[v]||v;p.unpaid=false;}};
+  window.removeEditorPayment=function(i){const d=window.__editingOrder?.draft;if(!d)return;d.pagamentos.splice(i,1);renderEditorPayments();};
+  window.saveEditedOrder=function(){const ed=window.__editingOrder;if(!ed)return;const d=ed.draft;d.codigo=Number(document.getElementById('oe-code').value);d.cliente=document.getElementById('oe-client').value.trim();d.endereco=document.getElementById('oe-address').value.trim();d.horarioEntrega=document.getElementById('oe-time').value.trim();d.totalPedido=num(document.getElementById('oe-total').value);if(!d.codigo){showToast('Informe o código do pedido.');return;}if(app.orders.some(o=>o.codigo===d.codigo&&o.id!==d.id)){showToast('Já existe outro pedido com esse código.');return;}if(!d.totalPedido)d.totalPedido=(d.pagamentos||[]).reduce((s,p)=>s+num(p.valor),0);const before=ed.original;if(ed.isNew)app.orders.push(d);else{const idx=app.orders.findIndex(o=>o.id===d.id);if(idx>=0)app.orders[idx]=d;}recordManualChange(describeOrderChanges(before,d));resetAfterOrderChange();saveState();closeOrderEditor();showToast(ed.isNew?'Pedido adicionado e registrado nas anotações.':'Pedido alterado e registrado nas anotações.');renderAdjustmentsStep();};
+  window.deleteEditedOrder=function(orderId){const o=app.orders.find(x=>x.id===orderId);if(!o)return;if(!confirm(`Excluir o pedido #${o.codigo}? A exclusão ficará registrada na folha final.`))return;app.orders=app.orders.filter(x=>x.id!==orderId);recordManualChange(`Pedido #${o.codigo} excluído manualmente do fechamento.`);resetAfterOrderChange();saveState();closeOrderEditor();renderAdjustmentsStep();showToast('Pedido excluído e alteração registrada.');};
 
   // -------- ETAPA 6 --------
   function reviewEdit(label,step){return `<button class="btn btn-ghost btn-small no-print" onclick="editStep(${step},6)">Editar</button>`;}
@@ -942,32 +1072,87 @@
     if (temPix && !temOutros && !temNaoPago) return 'PIX';
     if (!temPix && temOutros && !temNaoPago) return 'Outros';
 
-    // Pedidos divididos continuam identificando apenas o que interessa ao resumo:
-    // a presença de PIX, sem separar cartão/dinheiro/permuta/Brunetto/Gás do Povo.
+    // No resumo final, pedidos divididos exibem também quanto ficou em cada grupo.
+    // Ex.: 102 Outros / 25 PIX
+    const valorResumo = v => Number(v).toLocaleString('pt-BR', {
+      minimumFractionDigits: Number.isInteger(Number(v)) ? 0 : 2,
+      maximumFractionDigits: 2
+    });
     const partes = [];
-    if (temPix) partes.push('PIX');
-    if (temOutros) partes.push('Outros');
-    if (temNaoPago) partes.push('Não pago');
-    return partes.join(' + ');
+    if (temOutros) partes.push(`${valorResumo(outros)} Outros`);
+    if (temPix) partes.push(`${valorResumo(pix)} PIX`);
+    if (temNaoPago) partes.push(`${valorResumo(naoPago)} Não pago`);
+    return partes.join(' / ');
   }
 
   function productSummaryRows() {
     const grouped = new Map();
+
     for (const order of app.orders) {
-      const pagamento = orderPaymentSummary(order);
+      let pixPedido = 0;
+      let outrosPedido = 0;
+      let naoPagoPedido = 0;
+
+      for (const p of (order.pagamentos || [])) {
+        const valor = num(p.valor);
+        const form = (p.unpaid || p.formaAtual === 'nao_pago') ? 'nao_pago' : (p.formaAtual || 'outro');
+        if (form === 'pix') pixPedido += valor;
+        else if (form === 'nao_pago') naoPagoPedido += valor;
+        else outrosPedido += valor;
+      }
+
+      const totalPagamentos = pixPedido + outrosPedido + naoPagoPedido;
+
       for (const item of (order.produtos || [])) {
         if (!item.nome) continue;
         const produto = String(item.nome).trim();
         const produtoNormalizado = normalizeText(produto);
         if (produtoNormalizado.includes('refrigerante') || produtoNormalizado.includes('detergente')) continue;
+
         const unitario = num(item.unitario);
-        const key = `${normalizeKey(produto)}|${unitario.toFixed(4)}|${pagamento}`;
-        if (!grouped.has(key)) grouped.set(key, { produto, qtde:0, unitario, total:0, pagamento });
+        const qtde = num(item.quantidade);
+        const totalLinha = num(item.total) || (qtde * unitario);
+        const key = `${normalizeKey(produto)}|${unitario.toFixed(4)}`;
+
+        if (!grouped.has(key)) grouped.set(key, {
+          produto,
+          qtde: 0,
+          unitario,
+          total: 0,
+          pix: 0,
+          outros: 0,
+          naoPago: 0
+        });
+
         const row = grouped.get(key);
-        row.qtde += num(item.quantidade);
-        row.total += num(item.total);
+        row.qtde += qtde;
+        row.total += totalLinha;
+
+        // Distribui o valor TOTAL desta linha de produto na mesma proporção
+        // das formas de pagamento do pedido. Ex.: pedido 102 Outros + 25 PIX
+        // (127 no total) e linha de R$381 => 306 Outros + 75 PIX.
+        if (totalPagamentos > 0) {
+          row.pix += totalLinha * (pixPedido / totalPagamentos);
+          row.outros += totalLinha * (outrosPedido / totalPagamentos);
+          row.naoPago += totalLinha * (naoPagoPedido / totalPagamentos);
+        }
       }
     }
+
+    const valorResumo = v => Number(v).toLocaleString('pt-BR', {
+      minimumFractionDigits: Math.abs(Number(v) - Math.round(Number(v))) < 0.005 ? 0 : 2,
+      maximumFractionDigits: 2
+    });
+
+    const rows = [...grouped.values()].map(row => {
+      const partes = [];
+      if (row.outros > 0.004) partes.push(`${valorResumo(row.outros)} Outros`);
+      if (row.pix > 0.004) partes.push(`${valorResumo(row.pix)} PIX`);
+      if (row.naoPago > 0.004) partes.push(`${valorResumo(row.naoPago)} Não pago`);
+      row.pagamento = partes.length ? partes.join(' / ') : 'Sem forma de pagamento';
+      return row;
+    });
+
     const paymentRank = text => {
       const n = normalizeText(text);
       if (n === 'pix') return 1;
@@ -976,7 +1161,8 @@
       if (n.includes('nao pago')) return 4;
       return 5;
     };
-    return [...grouped.values()].sort((a,b) => paymentRank(a.pagamento)-paymentRank(b.pagamento) || a.produto.localeCompare(b.produto,'pt-BR') || a.unitario-b.unitario);
+
+    return rows.sort((a,b) => paymentRank(a.pagamento)-paymentRank(b.pagamento) || a.produto.localeCompare(b.produto,'pt-BR') || a.unitario-b.unitario);
   }
 
   function productSummaryHTML() {
@@ -1018,19 +1204,22 @@
   function loadReviewRows(){const r=loadCalc();return [['P13 vendidos',formatQty(r.sold)],['P13 carregados',formatQty(r.loaded)],['Caminhonetes',app.carga.caminhonetes.length],['Cargas iniciais',formatQty(r.initials)],['Final informado',formatQty(r.finalLast)],['Final esperado',formatQty(r.expected)],['Diferença',formatQty(r.diff)+' P13']].map(([k,v])=>`<div class="review-row"><span>${k}</span><strong>${v}</strong></div>`).join('');}
   function renderReviewStep(){
     const notes=autoNotes(),diff=cashDifference(),load=loadCalc();
-    const el=document.getElementById('step-6');
-    el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa 6 de 6</div><h2>Fechamento completo</h2><p>${app.meta.data?`Data do fechamento: <b>${esc(app.meta.data)}</b> · `:''}${app.orders.length} pedidos importados.</p></div><div class="no-print"><button class="btn btn-secondary" onclick="window.print()">Imprimir / salvar PDF</button></div></div>
+    const el=document.getElementById('step-7');
+    const ctx=closingContextData();
+    const entregadorTitulo=ctx.entregadores.length>1?'Entregadores':'Entregador';
+    el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa 7 de 7</div><h2>Fechamento completo</h2><p>${app.meta.data?`Data do fechamento: <b>${esc(app.meta.data)}</b> · `:''}${entregadorTitulo}: <b>${esc(ctx.entregadorLabel)}</b> · ${app.orders.length} pedidos importados.</p></div><div class="no-print"><button class="btn btn-secondary" onclick="window.print()">Imprimir / salvar PDF</button></div></div>
       ${productSummaryHTML()}
-      <div class="review-grid">
+            <div class="review-grid">
         <div class="card review-card"><div class="review-head"><h3>Relatórios</h3>${reviewEdit('Editar',1)}</div><div class="review-list"><div class="review-row"><span>Excel</span><strong>${esc(app.meta.excelFileName||'—')}</strong></div><div class="review-row"><span>Pedidos</span><strong>${app.orders.length}</strong></div><div class="review-row"><span>Com horário de entrega</span><strong>${app.orders.filter(o=>o.horarioEntrega).length}</strong></div></div></div>
-        <div class="card review-card"><div class="review-head"><h3>Pagamentos</h3><div class="no-print" style="display:flex;gap:6px">${reviewEdit('PIX',2)}${reviewEdit('Cartão',3)}</div></div><div class="review-list">${formReviewRows()}</div></div>
-        <div class="card review-card"><div class="review-head"><h3>Caixa</h3>${reviewEdit('Editar',4)}</div><div class="review-list">${cashReviewRows()}</div>${resultHTML(diff,'caixa')}</div>
-        <div class="card review-card"><div class="review-head"><h3>Carga</h3>${reviewEdit('Editar',5)}</div><div class="review-list">${loadReviewRows()}</div>${resultHTML(load.diff,'carga')}</div>
+        <div class="card review-card"><div class="review-head"><h3>Pedidos</h3><button class="btn btn-ghost btn-small no-print" onclick="navigatePublic(2)">Editar pedidos</button></div><div class="review-list"><div class="review-row"><span>Total de pedidos</span><strong>${app.orders.length}</strong></div><div class="review-row"><span>Alterações manuais</span><strong>${(app.manualChanges||[]).length}</strong></div><div class="review-row"><span>P13 para conferência</span><strong>${formatQty(getP13Sold())}</strong></div></div></div>
+        <div class="card review-card"><div class="review-head"><h3>Pagamentos</h3><div class="no-print" style="display:flex;gap:6px">${reviewEdit('PIX',3)}${reviewEdit('Cartão',4)}</div></div><div class="review-list">${formReviewRows()}</div></div>
+        <div class="card review-card"><div class="review-head"><h3>Caixa</h3>${reviewEdit('Editar',5)}</div><div class="review-list">${cashReviewRows()}</div>${resultHTML(diff,'caixa')}</div>
+        <div class="card review-card"><div class="review-head"><h3>Carga</h3>${reviewEdit('Editar',6)}</div><div class="review-list">${loadReviewRows()}</div>${resultHTML(load.diff,'carga')}</div>
       </div>
-      <div class="notes-box"><h3>⚠ Anotações e pendências do caixa</h3>${notes.length?`<ul>${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`:`<div class="empty-notes">Nenhum pedido marcado como não pago.</div>`}</div>
-      <div class="actions no-print"><button class="btn btn-secondary" onclick="navigatePublic(5)">← Voltar</button><div class="actions-right"><button class="btn btn-primary" onclick="finalizeClosing()">Finalizar fechamento</button></div></div>`;
+      <div class="notes-box"><h3>⚠ Anotações e pendências do caixa</h3>${notes.length?`<ul>${notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`:`<div class="empty-notes">Nenhuma pendência ou alteração manual registrada.</div>`}</div>
+      <div class="actions no-print"><button class="btn btn-secondary" onclick="navigatePublic(6)">← Voltar</button><div class="actions-right"><button class="btn btn-primary" onclick="finalizeClosing()">Finalizar fechamento</button></div></div>`;
   }
-  window.finalizeClosing=function(){app.finalized=true;app.inProgress=true;app.ui.lastStep=6;saveState();showToast('Fechamento finalizado e salvo neste navegador.');renderReviewStep();};
+  window.finalizeClosing=function(){app.finalized=true;app.inProgress=true;app.ui.lastStep=7;saveState();showToast('Fechamento finalizado e salvo neste navegador.');renderReviewStep();};
 
   // expose navigate used in inline HTML
   window.navigatePublic=window.navigatePublic||function(step){navigate(step)};
