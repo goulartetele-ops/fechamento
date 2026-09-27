@@ -873,7 +873,14 @@
   function whole(v){ return Math.trunc(num(v)); }
   function sumWholeItems(arr){ return (arr||[]).reduce((s,x)=>s+whole(x.valor),0); }
   function moneyWhole(v){ return whole(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:0, maximumFractionDigits:0 }); }
-  function totalOrdersWhole(){ return app.orders.reduce((s,o)=>s+whole(o.totalPedido),0); }
+  function currentOrderTotal(o){
+    if (!o) return 0;
+    if (o.manualRecalculatedTotal && (o.produtos||[]).length) {
+      return (o.produtos||[]).reduce((s,p)=>s + num(p.quantidade) * num(p.unitario), 0);
+    }
+    return num(o.totalPedido);
+  }
+  function totalOrdersWhole(){ return app.orders.reduce((s,o)=>s+whole(currentOrderTotal(o)),0); }
   function paymentTotalWhole(form){ return allPayments().reduce((s,{payment:p}) => (p.unpaid || p.formaAtual==='nao_pago' || p.formaAtual!==form) ? s : s + whole(p.valor), 0); }
   function cashDifference() {
     const c=app.caixa;
@@ -923,7 +930,7 @@
   }
 
   function renderCashStep() {
-    const t=paymentTotals(), totalOrders=app.orders.reduce((s,o)=>s+num(o.totalPedido),0);
+    const t=paymentTotals(), totalOrders=app.orders.reduce((s,o)=>s+currentOrderTotal(o),0);
     const pixPending=pendingFor('pix'), cardPending=pendingFor('cartao');
     const el=document.getElementById('step-5');
     el.innerHTML=`<div class="page-head"><div><div class="eyebrow">Etapa 5 de 7</div><h2>Cálculo do caixa</h2><p>Preencha os valores do fechamento. <b>Os centavos são desconsiderados nesta etapa.</b> O cálculo usa: troco inicial + total dos pedidos − demais valores.</p></div></div>
@@ -1019,28 +1026,74 @@
     app.carga.vendidosInformados=String(getP13Sold());
   }
   function renderOrderToolsHTML() {
-    const rows=[...app.orders].sort((a,b)=>a.codigo-b.codigo).map(o=>`<div class="order-tool-row"><div><strong>Pedido #${o.codigo} — ${esc(o.cliente||'Sem cliente')}</strong><small>${money(o.totalPedido)} · ${(o.pagamentos||[]).map(p=>`${FORM_LABELS[p.formaAtual]||p.formaAtual}: ${money(p.valor)}`).join(' + ')||'sem pagamento'}</small></div><button class="btn btn-ghost btn-small no-print" onclick="openOrderEditor('${o.id}')">Editar</button></div>`).join('');
+    const rows=[...app.orders].sort((a,b)=>a.codigo-b.codigo).map(o=>`<div class="order-tool-row"><div><strong>Pedido #${o.codigo} — ${esc(o.cliente||'Sem cliente')}</strong><small>${money(currentOrderTotal(o))} · ${(o.pagamentos||[]).map(p=>`${FORM_LABELS[p.formaAtual]||p.formaAtual}: ${money(p.valor)}`).join(' + ')||'sem pagamento'}</small></div><button class="btn btn-ghost btn-small no-print" onclick="openOrderEditor('${o.id}')">Editar</button></div>`).join('');
     return `<div class="card card-pad order-tools no-print"><div class="order-tools-head"><div><div class="section-title" style="margin:0">Ajustes manuais de pedidos</div><div class="muted small">Inclua pedidos que não vieram do relatório ou corrija valor, produtos e formas de pagamento.</div></div><button class="btn btn-primary btn-small" onclick="openOrderEditor()">+ Novo pedido</button></div><div class="alert alert-warning" style="margin-bottom:12px"><b>Atenção:</b> qualquer inclusão ou alteração feita aqui será registrada automaticamente nas anotações da folha final do fechamento e deve ser comunicada.</div><div class="order-tools-list">${rows||'<div class="muted">Nenhum pedido disponível.</div>'}</div></div>`;
   }
   window.openOrderEditor=function(orderId='') {
     const existing=orderId?app.orders.find(o=>o.id===orderId):null;
     const maxCode=app.orders.reduce((m,o)=>Math.max(m,Number(o.codigo)||0),0);
-    const o=existing?JSON.parse(JSON.stringify(existing)):{id:'manual_'+uid(),codigo:maxCode+1,cliente:'',endereco:'',entregador:'',totalPedido:0,produtos:[],pagamentos:[],dataLancamento:app.meta.data||'',horarioLancamento:'',tempoEntrega:'',horarioEntrega:'',manual:true};
+    const o=existing?JSON.parse(JSON.stringify(existing)):{
+      id:'manual_'+uid(), codigo:maxCode+1, cliente:'Pedido manual', endereco:'', entregador:'',
+      totalPedido:0,
+      produtos:[{nome:'P13',quantidade:1,unitario:0,total:0}],
+      pagamentos:[{id:'pay_manual_'+uid(),formaOriginal:'outro',formaAtual:'outro',rotuloOriginal:'Ajuste manual',valor:0,conferencias:{pix:null,cartao:null},realocadoPara:{pix:null,cartao:null},unpaid:false,manual:true}],
+      dataLancamento:app.meta.data||'', horarioLancamento:'', tempoEntrega:'', horarioEntrega:'', manual:true
+    };
+    if(!existing) recalcDraftOrderTotal(o);
     window.__editingOrder={isNew:!existing, original:existing?JSON.parse(orderSnapshot(existing)):null, draft:o};
     const root=document.getElementById('order-modal-root');
-    root.innerHTML=`<div class="modal-backdrop" onclick="if(event.target===this)closeOrderEditor()"><div class="modal-card"><div class="modal-head"><div><strong>${existing?'Editar pedido #'+o.codigo:'Adicionar novo pedido'}</strong><div class="muted small">Alterações serão registradas na folha final.</div></div><button class="btn btn-secondary btn-small" onclick="closeOrderEditor()">Fechar</button></div><div class="modal-body"><div class="alert alert-warning"><b>Importante:</b> qualquer dado diferente do sistema será incluído automaticamente nas anotações do fechamento.</div><div class="grid-2"><label class="field">Código do pedido<input id="oe-code" type="number" value="${esc(o.codigo)}"></label><label class="field">Valor total do pedido<div class="money-input"><span>R$</span><input id="oe-total" type="text" inputmode="decimal" value="${esc(o.totalPedido)}"></div></label><label class="field">Cliente<input id="oe-client" type="text" value="${esc(o.cliente||'')}"></label><label class="field">Horário de entrega<input id="oe-time" type="text" placeholder="HH:MM:SS" value="${esc(o.horarioEntrega||'')}"></label></div><label class="field">Endereço<input id="oe-address" type="text" value="${esc(o.endereco||'')}"></label><div><div class="section-title" style="font-size:15px">Produtos</div><div id="oe-products" class="editor-list"></div><button class="btn btn-secondary btn-small" onclick="addEditorProduct()">+ Adicionar produto</button></div><div><div class="section-title" style="font-size:15px">Formas de pagamento</div><div id="oe-payments" class="editor-list"></div><button class="btn btn-secondary btn-small" onclick="addEditorPayment()">+ Adicionar forma de pagamento</button></div><div class="actions"><button class="btn btn-danger" onclick="${existing?`deleteEditedOrder('${o.id}')`:'closeOrderEditor()'}">${existing?'Excluir pedido':'Cancelar'}</button><div class="actions-right"><button class="btn btn-primary" onclick="saveEditedOrder()">Salvar alterações</button></div></div></div></div></div>`;
-    renderEditorProducts(); renderEditorPayments();
+    root.innerHTML=`<div class="modal-backdrop" onclick="if(event.target===this)closeOrderEditor()"><div class="modal-card"><div class="modal-head"><div><strong>${existing?'Editar pedido #'+o.codigo:'Adicionar pedido'}</strong><div class="muted small">Informe somente o que importa para o fechamento: produtos e pagamentos.</div></div><button class="btn btn-secondary btn-small" onclick="closeOrderEditor()">Fechar</button></div><div class="modal-body"><div class="alert alert-warning"><b>Importante:</b> qualquer inclusão ou alteração será registrada automaticamente nas anotações da folha final.</div><div class="form-total-card" style="margin-bottom:4px"><div><span>Total calculado do pedido</span><strong id="oe-order-total">${money(o.totalPedido)}</strong></div><div id="oe-payment-status" class="small" style="text-align:right"></div></div><div><div class="section-title" style="font-size:15px">Produtos</div><div class="muted small" style="margin-bottom:8px">O total é calculado automaticamente por quantidade × valor unitário.</div><div id="oe-products" class="editor-list"></div><button class="btn btn-secondary btn-small" onclick="addEditorProduct()">+ Adicionar produto</button></div><div><div class="section-title" style="font-size:15px">Formas de pagamento</div><div class="muted small" style="margin-bottom:8px">Adicione quantas formas forem necessárias. Ao adicionar uma nova, o sistema sugere o valor que ainda falta distribuir.</div><div id="oe-payments" class="editor-list"></div><button class="btn btn-secondary btn-small" onclick="addEditorPayment()">+ Adicionar forma de pagamento</button></div><div class="actions"><button class="btn btn-danger" onclick="${existing?`deleteEditedOrder('${o.id}')`:'closeOrderEditor()'}">${existing?'Excluir pedido':'Cancelar'}</button><div class="actions-right"><button class="btn btn-primary" onclick="saveEditedOrder()">Salvar alterações</button></div></div></div></div></div>`;
+    renderEditorProducts(); renderEditorPayments(); refreshEditorTotals();
   };
   window.closeOrderEditor=function(){document.getElementById('order-modal-root').innerHTML='';window.__editingOrder=null;};
-  function renderEditorProducts(){const d=window.__editingOrder?.draft;if(!d)return;const el=document.getElementById('oe-products');if(!el)return;el.innerHTML=(d.produtos||[]).map((p,i)=>`<div class="editor-row"><label class="field">Produto<input value="${esc(p.nome||'')}" oninput="editProduct(${i},'nome',this.value)"></label><label class="field">Qtd.<input type="text" inputmode="decimal" value="${esc(p.quantidade)}" oninput="editProduct(${i},'quantidade',this.value)"></label><label class="field">Unitário<input type="text" inputmode="decimal" value="${esc(p.unitario)}" oninput="editProduct(${i},'unitario',this.value)"></label><label class="field">Total<input type="text" inputmode="decimal" value="${esc(p.total)}" oninput="editProduct(${i},'total',this.value)"></label><button class="btn btn-danger btn-small" onclick="removeEditorProduct(${i})">Remover</button></div>`).join('')||'<div class="muted small">Nenhum produto informado.</div>';}
-  window.addEditorProduct=function(){const d=window.__editingOrder?.draft;if(!d)return;d.produtos=d.produtos||[];d.produtos.push({nome:'P13',quantidade:1,unitario:0,total:0});renderEditorProducts();};
-  window.editProduct=function(i,k,v){const p=window.__editingOrder?.draft?.produtos?.[i];if(!p)return;p[k]=k==='nome'?v:num(v);};
-  window.removeEditorProduct=function(i){const d=window.__editingOrder?.draft;if(!d)return;d.produtos.splice(i,1);renderEditorProducts();};
-  function renderEditorPayments(){const d=window.__editingOrder?.draft;if(!d)return;const el=document.getElementById('oe-payments');if(!el)return;el.innerHTML=(d.pagamentos||[]).map((p,i)=>`<div class="editor-row editor-payment-row"><label class="field">Forma<select onchange="editPayment(${i},'formaAtual',this.value)">${paymentFormOptions(p.formaAtual||'outro')}</select></label><label class="field">Valor<div class="money-input"><span>R$</span><input type="text" inputmode="decimal" value="${esc(p.valor)}" oninput="editPayment(${i},'valor',this.value)"></div></label><button class="btn btn-danger btn-small" onclick="removeEditorPayment(${i})">Remover</button></div>`).join('')||'<div class="muted small">Nenhuma forma de pagamento informada.</div>';}
-  window.addEditorPayment=function(){const d=window.__editingOrder?.draft;if(!d)return;d.pagamentos=d.pagamentos||[];d.pagamentos.push({id:'pay_manual_'+uid(),formaOriginal:'outro',formaAtual:'outro',rotuloOriginal:'Ajuste manual',valor:0,conferencias:{pix:null,cartao:null},realocadoPara:{pix:null,cartao:null},unpaid:false,manual:true});renderEditorPayments();};
-  window.editPayment=function(i,k,v){const p=window.__editingOrder?.draft?.pagamentos?.[i];if(!p)return;if(k==='valor')p.valor=num(v);else{p[k]=v;p.formaOriginal=p.formaOriginal||v;p.rotuloOriginal=FORM_LABELS[v]||v;p.unpaid=false;}};
-  window.removeEditorPayment=function(i){const d=window.__editingOrder?.draft;if(!d)return;d.pagamentos.splice(i,1);renderEditorPayments();};
-  window.saveEditedOrder=function(){const ed=window.__editingOrder;if(!ed)return;const d=ed.draft;d.codigo=Number(document.getElementById('oe-code').value);d.cliente=document.getElementById('oe-client').value.trim();d.endereco=document.getElementById('oe-address').value.trim();d.horarioEntrega=document.getElementById('oe-time').value.trim();d.totalPedido=num(document.getElementById('oe-total').value);if(!d.codigo){showToast('Informe o código do pedido.');return;}if(app.orders.some(o=>o.codigo===d.codigo&&o.id!==d.id)){showToast('Já existe outro pedido com esse código.');return;}if(!d.totalPedido)d.totalPedido=(d.pagamentos||[]).reduce((s,p)=>s+num(p.valor),0);const before=ed.original;if(ed.isNew)app.orders.push(d);else{const idx=app.orders.findIndex(o=>o.id===d.id);if(idx>=0)app.orders[idx]=d;}recordManualChange(describeOrderChanges(before,d));resetAfterOrderChange();saveState();closeOrderEditor();showToast(ed.isNew?'Pedido adicionado e registrado nas anotações.':'Pedido alterado e registrado nas anotações.');renderAdjustmentsStep();};
+  function recalcDraftOrderTotal(d){
+    if(!d)return 0;
+    d.produtos=d.produtos||[];
+    let total=0;
+    for(const p of d.produtos){
+      p.quantidade=num(p.quantidade);
+      p.unitario=num(p.unitario);
+      p.total=p.quantidade*p.unitario;
+      total+=p.total;
+    }
+    d.totalPedido=total;
+    d.manualRecalculatedTotal=true;
+    return total;
+  }
+  function refreshEditorTotals(){
+    const d=window.__editingOrder?.draft;if(!d)return;
+    const totalEl=document.getElementById('oe-order-total'); if(totalEl) totalEl.textContent=money(d.totalPedido);
+    const paid=(d.pagamentos||[]).reduce((s,p)=>s+num(p.valor),0);
+    const diff=d.totalPedido-paid;
+    const st=document.getElementById('oe-payment-status');
+    if(st){
+      if(Math.abs(diff)<0.01) st.innerHTML=`<span style="color:var(--green);font-weight:900">✓ Pagamentos fecham em ${money(paid)}</span>`;
+      else if(diff>0) st.innerHTML=`<span style="color:var(--amber);font-weight:900">Falta distribuir ${money(diff)}</span>`;
+      else st.innerHTML=`<span style="color:var(--red);font-weight:900">Pagamentos excedem em ${money(Math.abs(diff))}</span>`;
+    }
+  }
+  function renderEditorProducts(){
+    const d=window.__editingOrder?.draft;if(!d)return;const el=document.getElementById('oe-products');if(!el)return;
+    el.innerHTML=(d.produtos||[]).map((p,i)=>`<div class="editor-row"><label class="field">Produto<input value="${esc(p.nome||'')}" oninput="editProduct(${i},'nome',this.value)"></label><label class="field">Qtd.<input type="text" inputmode="decimal" value="${esc(p.quantidade)}" oninput="editProduct(${i},'quantidade',this.value)"></label><label class="field">Unitário<div class="money-input"><span>R$</span><input type="text" inputmode="decimal" value="${esc(p.unitario)}" oninput="editProduct(${i},'unitario',this.value)"></div></label><label class="field">Total<div class="money-input"><span>R$</span><input id="oe-product-total-${i}" type="text" value="${esc((num(p.quantidade)*num(p.unitario)).toFixed(2).replace('.',','))}" readonly tabindex="-1"></div></label><button class="btn btn-danger btn-small" onclick="removeEditorProduct(${i})">Remover</button></div>`).join('')||'<div class="muted small">Nenhum produto informado.</div>';
+  }
+  window.addEditorProduct=function(){const d=window.__editingOrder?.draft;if(!d)return;d.produtos=d.produtos||[];d.produtos.push({nome:'P13',quantidade:1,unitario:0,total:0});recalcDraftOrderTotal(d);renderEditorProducts();refreshEditorTotals();};
+  window.editProduct=function(i,k,v){const d=window.__editingOrder?.draft;const p=d?.produtos?.[i];if(!p)return;p[k]=k==='nome'?v:num(v);if(k!=='nome'){p.total=num(p.quantidade)*num(p.unitario);recalcDraftOrderTotal(d);const line=document.getElementById(`oe-product-total-${i}`);if(line)line.value=p.total.toFixed(2).replace('.',',');}refreshEditorTotals();};
+  window.removeEditorProduct=function(i){const d=window.__editingOrder?.draft;if(!d)return;d.produtos.splice(i,1);recalcDraftOrderTotal(d);renderEditorProducts();refreshEditorTotals();};
+  function renderEditorPayments(){const d=window.__editingOrder?.draft;if(!d)return;const el=document.getElementById('oe-payments');if(!el)return;el.innerHTML=(d.pagamentos||[]).map((p,i)=>`<div class="editor-row editor-payment-row"><label class="field">Forma<select onchange="editPayment(${i},'formaAtual',this.value)">${paymentFormOptions(p.formaAtual||'outro')}</select></label><label class="field">Valor<div class="money-input"><span>R$</span><input type="text" inputmode="decimal" value="${esc(p.valor)}" oninput="editPayment(${i},'valor',this.value)"></div></label><button class="btn btn-danger btn-small" onclick="removeEditorPayment(${i})">Remover</button></div>`).join('')||'<div class="muted small">Nenhuma forma de pagamento informada.</div>';refreshEditorTotals();}
+  window.addEditorPayment=function(){const d=window.__editingOrder?.draft;if(!d)return;d.pagamentos=d.pagamentos||[];const already=d.pagamentos.reduce((s,p)=>s+num(p.valor),0);const remaining=Math.max(0,num(d.totalPedido)-already);d.pagamentos.push({id:'pay_manual_'+uid(),formaOriginal:'outro',formaAtual:'outro',rotuloOriginal:'Ajuste manual',valor:remaining,conferencias:{pix:null,cartao:null},realocadoPara:{pix:null,cartao:null},unpaid:false,manual:true});renderEditorPayments();};
+  window.editPayment=function(i,k,v){const p=window.__editingOrder?.draft?.pagamentos?.[i];if(!p)return;if(k==='valor')p.valor=num(v);else{p[k]=v;p.formaOriginal=p.formaOriginal||v;p.rotuloOriginal=FORM_LABELS[v]||v;p.unpaid=false;}refreshEditorTotals();};
+  window.removeEditorPayment=function(i){const d=window.__editingOrder?.draft;if(!d)return;d.pagamentos.splice(i,1);renderEditorPayments();refreshEditorTotals();};
+  window.saveEditedOrder=function(){
+    const ed=window.__editingOrder;if(!ed)return;const d=ed.draft;
+    if(d.manualRecalculatedTotal || d.manual) recalcDraftOrderTotal(d);
+    if(!(d.produtos||[]).length){showToast('Adicione pelo menos um produto.');return;}
+    if(!(d.pagamentos||[]).length){showToast('Adicione pelo menos uma forma de pagamento.');return;}
+    const paid=(d.pagamentos||[]).reduce((s,p)=>s+num(p.valor),0);
+    if(Math.abs(num(d.totalPedido)-paid)>.01){showToast('O total dos pagamentos precisa ser igual ao total dos produtos.');return;}
+    const before=ed.original;
+    if(ed.isNew)app.orders.push(d);else{const idx=app.orders.findIndex(o=>o.id===d.id);if(idx>=0)app.orders[idx]=d;}
+    recordManualChange(describeOrderChanges(before,d));resetAfterOrderChange();saveState();closeOrderEditor();showToast(ed.isNew?'Pedido adicionado e registrado nas anotações.':'Pedido alterado e registrado nas anotações.');renderAdjustmentsStep();
+  };
   window.deleteEditedOrder=function(orderId){const o=app.orders.find(x=>x.id===orderId);if(!o)return;if(!confirm(`Excluir o pedido #${o.codigo}? A exclusão ficará registrada na folha final.`))return;app.orders=app.orders.filter(x=>x.id!==orderId);recordManualChange(`Pedido #${o.codigo} excluído manualmente do fechamento.`);resetAfterOrderChange();saveState();closeOrderEditor();renderAdjustmentsStep();showToast('Pedido excluído e alteração registrada.');};
 
   // -------- ETAPA 6 --------
@@ -1168,7 +1221,7 @@
   function productSummaryHTML() {
     const rows = productSummaryRows();
     const totals = paymentTotals();
-    const total = app.orders.reduce((s,o) => s + num(o.totalPedido), 0);
+    const total = app.orders.reduce((s,o) => s + currentOrderTotal(o), 0);
     const outros = total - (totals.pix||0);
     const body = rows.length ? rows.map(r => `<tr><td>${esc(r.produto)}</td><td class="num">${formatQty(r.qtde)}</td><td class="num">${money(r.unitario)}</td><td class="num">${money(r.total)}</td><td class="payment-cell">${esc(r.pagamento)}</td></tr>`).join('') : `<tr><td colspan="5" class="muted">Nenhum produto encontrado nos pedidos importados.</td></tr>`;
     return `<div class="card product-summary-card">
@@ -1183,7 +1236,7 @@
       <div class="table-wrap"><table class="summary-table"><thead><tr><th>Produto</th><th class="num">Qtde</th><th class="num">Valor Unit.</th><th class="num">Total</th><th>Pagamento</th></tr></thead><tbody>${body}</tbody></table></div>
     </div>`;
   }
-  function formReviewRows(){const t=paymentTotals();return [['Total geral dos pedidos',app.orders.reduce((s,o)=>s+num(o.totalPedido),0)],['PIX',t.pix],['Cartão',t.cartao],['Dinheiro',t.dinheiro],['Gás do Povo',t.gas_povo],['Permuta',t.permuta],['Cupom Brunetto',t.cupom_brunetto],['Não pago',t.nao_pago]].map(([k,v])=>`<div class="review-row"><span>${k}</span><strong>${money(v)}</strong></div>`).join('');}
+  function formReviewRows(){const t=paymentTotals();return [['Total geral dos pedidos',app.orders.reduce((s,o)=>s+currentOrderTotal(o),0)],['PIX',t.pix],['Cartão',t.cartao],['Dinheiro',t.dinheiro],['Gás do Povo',t.gas_povo],['Permuta',t.permuta],['Cupom Brunetto',t.cupom_brunetto],['Não pago',t.nao_pago]].map(([k,v])=>`<div class="review-row"><span>${k}</span><strong>${money(v)}</strong></div>`).join('');}
   function cashReviewRows(){
     const c=app.caixa;
     const t=paymentTotals();
